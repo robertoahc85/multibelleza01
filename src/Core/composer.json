@@ -1,0 +1,11 @@
+{
+  "name": "multibelleza/multibelleza01",
+  "description": "Multibelleza",
+  "type": "project",
+  "require": {},
+  "autoload": {
+    "psr-4": {
+      "Codex\\": "src/"
+    }
+  }
+}

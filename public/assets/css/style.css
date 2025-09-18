@@ -40963,7 +40963,7 @@ pre {
   margin-left: 50px;
   gap: 50px;
   margin: 0 auto;
-  background: url("../images/login/MultiBelleza_Logo.jpg");
+  /* background: #ff9ed3; */
   background-position: right center;
   background-size: 10%;
   background-repeat: no-repeat;
