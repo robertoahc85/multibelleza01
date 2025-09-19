@@ -2,10 +2,10 @@
 <html lang="es">
 <?php
   // BASE_URL dinámico para assets/enlaces aunque la app viva en subcarpeta
-  $BASE_URL = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/');
-  $loggedIn = !empty($_SESSION['user']);
-  // Si el controlador/vista envía 'hideMenu' (p.ej. viewGuest), respétalo
-  $hideMenu = !empty($hideMenu);
+  $BASE_URL  = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/');
+  // Si alguna vista (login/register) necesita ocultar elementos extra, puede pasar $hideMenu
+  $hideMenu  = !empty($hideMenu);
+  $titleSafe = htmlspecialchars($title ?? 'Codex', ENT_QUOTES, 'UTF-8');
 ?>
 <head>
   <meta charset="UTF-8">
@@ -14,8 +14,7 @@
   <meta name="description" content="Admiro admin es flexible, potente y moderno.">
   <meta name="keywords" content="admin template, dashboard, bootstrap 5">
   <meta name="author" content="pixelstrap">
-
-  <title><?= htmlspecialchars($title ?? 'Codex', ENT_QUOTES, 'UTF-8') ?></title>
+  <title><?= $titleSafe ?></title>
 
   <!-- Favicon -->
   <link rel="icon" href="<?= $BASE_URL ?>/assets/images/favicon.png" type="image/png">
@@ -40,35 +39,16 @@
 </head>
 
 <body>
+  <!-- IMPORTANTE: sin header/nav aquí para no duplicar con el template del dashboard -->
+  <main>
+    <?= $content ?? '' ?>
+  </main>
 
-<?php if ($loggedIn && !$hideMenu): ?>
-  <header>
-    <nav>
-      <a href="<?= $BASE_URL ?>/">Home</a> |
-      <a href="<?= $BASE_URL ?>/dashboard">Dashboard</a> |
-      <a href="<?= $BASE_URL ?>/admin">Admin</a> |
-      <?= htmlspecialchars($_SESSION['user']['name']) ?> (<?= htmlspecialchars($_SESSION['user']['role']) ?>) |
-      <a href="<?= $BASE_URL ?>/logout">Salir</a>
-    </nav>
-  </header>
-  <hr>
-<?php endif; ?>
-
-<main>
-  <?= $content ?? '' ?>
-</main>
-
-<!-- JS -->
-<script src="<?= $BASE_URL ?>/assets/js/vendors/jquery/jquery.min.js"></script>
-
-<!-- Usa EITHER bootstrap.bundle (incluye Popper) OR separa popper + bootstrap; aquí va bundle -->
-<script src="<?= $BASE_URL ?>/assets/js/vendors/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
-
-<!-- FontAwesome runtime si lo utilizas -->
-<script src="<?= $BASE_URL ?>/assets/js/vendors/font-awesome/fontawesome.min.js"></script>
-
-<!-- Utilidades -->
-<script src="<?= $BASE_URL ?>/assets/js/password.js"></script>
-<script src="<?= $BASE_URL ?>/assets/js/script.js"></script>
+  <!-- JS globales -->
+  <script src="<?= $BASE_URL ?>/assets/js/vendors/jquery/jquery.min.js"></script>
+  <script src="<?= $BASE_URL ?>/assets/js/vendors/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
+  <script src="<?= $BASE_URL ?>/assets/js/vendors/font-awesome/fontawesome.min.js"></script>
+  <script src="<?= $BASE_URL ?>/assets/js/password.js"></script>
+  <script src="<?= $BASE_URL ?>/assets/js/script.js"></script>
 </body>
 </html>
