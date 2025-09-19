@@ -1,21 +1,39 @@
 <?php
 // views/dashboard/index.php
 // Asegúrate que llegas aquí autenticado (requireAuth en el controlador)
-$BASE_URL = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/');
-$userName = htmlspecialchars($_SESSION['user']['name'] ?? 'Usuario Actual', ENT_QUOTES, 'UTF-8');
-$userRole = htmlspecialchars($_SESSION['user']['role'] ?? 'Admin', ENT_QUOTES, 'UTF-8');
+@session_start();
+
+/** Helpers */
+function e(string $v): string { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8'); }
+
+// Resuelve una base robusta para assets y rutas relativas a la app
+$base = $_SERVER['BASE_URI'] ?? dirname($_SERVER['SCRIPT_NAME'] ?? '/');
+$base = rtrim($base, '/');
+if ($base === '.' || $base === '\\' || $base === '') { $base = ''; } // fallback
+
+function u(string $path) {
+  global $base;
+  $path = '/'.ltrim($path, '/');
+  return ($base ? $base : '').$path;
+}
+
+$userName = e($_SESSION['user']['name'] ?? 'Usuario Actual');
+$userRole = e($_SESSION['user']['role'] ?? 'Admin');
+
+// Si quieres forzar login:
+// if (empty($_SESSION['user'])) { header('Location: '.u('login')); exit; }
 ?>
 <div class="page-wrapper compact-wrapper" id="pageWrapper">
   <header class="page-header row">
     <div class="logo-wrapper d-flex align-items-center col-auto"
          style="background-color:#ffffff; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:8px; border-radius:8px;">
-      <a href="<?= $BASE_URL ?>/dashboard">
-        <img class="light-logo img-fluid" src="<?= $BASE_URL ?>/assets/images/logo/multibellezalogo.png"
+      <a href="<?= u('dashboard') ?>">
+        <img class="light-logo img-fluid" src="<?= u('assets/images/logo/multibellezalogo.png') ?>"
              alt="MultiBelleza" style="max-width:180px; height:80px;">
-        <img class="dark-logo img-fluid" src="<?= $BASE_URL ?>/assets/images/logo/multibellezalogo.png" alt="logo">
+        <img class="dark-logo img-fluid" src="<?= u('assets/images/logo/multibellezalogo.png') ?>" alt="logo">
       </a>
-      <a class="close-btn toggle-sidebar" href="javascript:void(0)">
-        <svg class="svg-color"><use href="<?= $BASE_URL ?>/assets/svg/iconly-sprite.svg#Category"></use></svg>
+      <a class="close-btn toggle-sidebar" href="javascript:void(0)" aria-label="Alternar menú lateral">
+        <svg class="svg-color"><use href="<?= u('assets/svg/iconly-sprite.svg#Category') ?>"></use></svg>
       </a>
     </div>
 
@@ -33,40 +51,67 @@ $userRole = htmlspecialchars($_SESSION['user']['role'] ?? 'Admin', ENT_QUOTES, '
       </div>
 
       <div class="nav-right">
-        <ul class="header-right">
-          <li class="search d-lg-none d-flex">
-            <a href="javascript:void(0)">
-              <svg><use href="<?= $BASE_URL ?>/assets/svg/iconly-sprite.svg#Search"></use></svg>
+        <ul class="header-right align-items-center mb-0">
+
+          <!-- Botón de logout visible (GET). Si usas CSRF, cambia por form POST de abajo -->
+          <!-- <li class="d-none d-md-inline-flex">
+            <a class="d-inline-flex align-items-center text-danger" href="<?= u('logout') ?>">
+              <svg class="svg-color" aria-hidden="true"><use href="<?= u('assets/svg/iconly-sprite.svg#Login') ?>"></use></svg>
+              <span class="ms-2">Cerrar sesión</span>
             </a>
-          </li>
-          <li> <a class="dark-mode" href="javascript:void(0)">
-              <svg><use href="<?= $BASE_URL ?>/assets/svg/iconly-sprite.svg#moondark"></use></svg>
+          </li> -->
+
+          <!-- Menú de usuario (Bootstrap dropdown-compatible) -->
+          <li class="nav-item dropdown">
+            <a class="nav-link d-flex align-items-center gap-2 dropdown-toggle"
+               href="#" id="userMenu" role="button"
+               data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" aria-haspopup="true">
+              <img src="<?= u('assets/images/profile.png') ?>" alt="user"
+                   style="width:36px;height:36px;border-radius:50%;">
+              <span class="text-start d-none d-sm-inline">
+                <strong><?= $userName ?></strong><br>
+                <small class="text-muted"><?= $userRole ?></small>
+              </span>
             </a>
-          </li>
-          <li class="profile-nav custom-dropdown">
-            <div class="user-wrap">
-              <div class="user-img"><img src="<?= $BASE_URL ?>/assets/images/profile.png" alt="user"></div>
-              <div class="user-content">
-                <h6><?= $userName ?></h6>
-                <p class="mb-0"><?= $userRole ?><i class="fa-solid fa-chevron-down ms-1"></i></p>
-              </div>
-            </div>
-            <div class="custom-menu overflow-hidden">
-              <ul class="profile-body">
-                <li class="d-flex">
-                  <svg class="svg-color"><use href="<?= $BASE_URL ?>/assets/svg/iconly-sprite.svg#Profile"></use></svg>
-                  <a class="ms-2" href="<?= $BASE_URL ?>/users">Cuenta</a>
-                </li>
-                <li class="d-flex">
-                  <svg class="svg-color"><use href="<?= $BASE_URL ?>/assets/svg/iconly-sprite.svg#Login"></use></svg>
-                  <a class="ms-2" href="<?= $BASE_URL ?>/logout">Cerrar sesión</a>
-                </li>
-              </ul>
-            </div>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+              <li>
+                <a class="dropdown-item d-flex align-items-center" href="<?= u('users') ?>">
+                  <svg class="me-2 svg-color" style="width:18px;height:18px;">
+                    <use href="<?= u('assets/svg/iconly-sprite.svg#Profile') ?>"></use>
+                  </svg>
+                  Cuenta
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+
+              <!-- Opción A: GET simple -->
+              <li>
+                <a class="dropdown-item d-flex align-items-center text-danger" href="<?= u('logout') ?>">
+                  <svg class="me-2 svg-color" style="width:18px;height:18px;">
+                    <use href="<?= u('assets/svg/iconly-sprite.svg#Login') ?>"></use>
+                  </svg>
+                  Cerrar sesión
+                </a>
+              </li>
+
+              <?php /* 
+              // Opción B: POST con CSRF (recomendado)
+              <li>
+                <form method="post" action="<?= u('logout') ?>" class="px-3">
+                  <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf'] ?? '') ?>">
+                  <button type="submit" class="dropdown-item d-flex align-items-center text-danger">
+                    <svg class="me-2 svg-color" style="width:18px;height:18px;">
+                      <use href="<?= u('assets/svg/iconly-sprite.svg#Login') ?>"></use>
+                    </svg>
+                    Cerrar sesión
+                  </button>
+                </form>
+              </li>
+              */ ?>
+            </ul>
           </li>
         </ul>
       </div>
-
     </div>
   </header>
 
@@ -82,18 +127,18 @@ $userRole = htmlspecialchars($_SESSION['user']['role'] ?? 'Admin', ENT_QUOTES, '
 
           <li class="sidebar-list">
             <a class="sidebar-link" href="javascript:void(0)">
-              <svg class="stroke-icon"><use href="<?= $BASE_URL ?>/assets/svg/iconly-sprite.svg#web"></use></svg>
+              <svg class="stroke-icon"><use href="<?= u('assets/svg/iconly-sprite.svg#web') ?>"></use></svg>
               <h6>Autenticación y Autorización</h6><i class="iconly-Arrow-Right-2 icli"></i>
             </a>
             <ul class="sidebar-submenu">
-              <li><a href="<?= $BASE_URL ?>/admin">Grupos</a></li>
-              <li><a href="<?= $BASE_URL ?>/users">Usuarios</a></li>
+              <li><a href="<?= u('admin') ?>">Grupos</a></li>
+              <li><a href="<?= u('users') ?>">Usuarios</a></li>
             </ul>
           </li>
 
           <li class="sidebar-list">
             <a class="sidebar-link" href="javascript:void(0)">
-              <svg class="stroke-icon"><use href="<?= $BASE_URL ?>/assets/svg/iconly-sprite.svg#Tags"></use></svg>
+              <svg class="stroke-icon"><use href="<?= u('assets/svg/iconly-sprite.svg#Tags') ?>"></use></svg>
               <h6>Marcas</h6><i class="iconly-Arrow-Right-2 icli"></i>
             </a>
             <ul class="sidebar-submenu">
@@ -104,7 +149,7 @@ $userRole = htmlspecialchars($_SESSION['user']['role'] ?? 'Admin', ENT_QUOTES, '
 
           <li class="sidebar-list">
             <a class="sidebar-link" href="javascript:void(0)">
-              <svg class="stroke-icon"><use href="<?= $BASE_URL ?>/assets/svg/iconly-sprite.svg#Category"></use></svg>
+              <svg class="stroke-icon"><use href="<?= u('assets/svg/iconly-sprite.svg#Category') ?>"></use></svg>
               <h6>Categorías</h6><i class="iconly-Arrow-Right-2 icli"></i>
             </a>
             <ul class="sidebar-submenu">
@@ -112,8 +157,7 @@ $userRole = htmlspecialchars($_SESSION['user']['role'] ?? 'Admin', ENT_QUOTES, '
             </ul>
           </li>
 
-          <!-- Añade más items igual que en tu HTML de referencia -->
-
+          <!-- Más items... -->
         </ul>
       </div>
     </aside>
@@ -124,7 +168,6 @@ $userRole = htmlspecialchars($_SESSION['user']['role'] ?? 'Admin', ENT_QUOTES, '
       <h2 class="mb-3">Bienvenido, <?= $userName ?></h2>
       <p class="text-muted">Selecciona una opción del menú para empezar.</p>
 
-      <!-- Aquí puedes añadir cards/widgets del dashboard -->
       <div class="row g-3">
         <div class="col-md-6">
           <div class="card h-100">
@@ -143,7 +186,6 @@ $userRole = htmlspecialchars($_SESSION['user']['role'] ?? 'Admin', ENT_QUOTES, '
           </div>
         </div>
       </div>
-
     </main>
     <!-- /Contenido -->
 
@@ -154,7 +196,7 @@ $userRole = htmlspecialchars($_SESSION['user']['role'] ?? 'Admin', ENT_QUOTES, '
           <div class="col-md-6">
             <p class="float-end mb-0">Hecho con
               <svg class="svg-color footer-icon">
-                <use href="<?= $BASE_URL ?>/assets/svg/iconly-sprite.svg#heart"></use>
+                <use href="<?= u('assets/svg/iconly-sprite.svg#heart') ?>"></use>
               </svg>
             </p>
           </div>
@@ -164,10 +206,10 @@ $userRole = htmlspecialchars($_SESSION['user']['role'] ?? 'Admin', ENT_QUOTES, '
   </div>
 </div>
 
-<!-- JS específicos del dashboard (usa BASE_URL, no ../) -->
-<script src="<?= $BASE_URL ?>/assets/js/sidebar.js"></script>
-<script src="<?= $BASE_URL ?>/assets/js/scrollbar/simplebar.js"></script>
-<script src="<?= $BASE_URL ?>/assets/js/scrollbar/custom.js"></script>
-<script src="<?= $BASE_URL ?>/assets/js/slick/slick.min.js"></script>
-<script src="<?= $BASE_URL ?>/assets/js/slick/slick.js"></script>
-<script src="<?= $BASE_URL ?>/assets/js/fetch-pages.js"></script>
+<!-- JS del dashboard -->
+<script src="<?= u('assets/js/sidebar.js') ?>"></script>
+<script src<?= '="'.u('assets/js/scrollbar/simplebar.js').'"' ?>></script>
+<script src="<?= u('assets/js/scrollbar/custom.js') ?>"></script>
+<script src="<?= u('assets/js/slick/slick.min.js') ?>"></script>
+<script src="<?= u('assets/js/slick/slick.js') ?>"></script>
+<script src="<?= u('assets/js/fetch-pages.js') ?>"></script>
